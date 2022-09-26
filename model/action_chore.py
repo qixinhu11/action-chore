@@ -41,7 +41,7 @@ class ACTIONCHORE(BasePIFuNet):
 
         assert self.z_feat == 'xyz'
         zfeat_size = 3
-        feature_size = 256 + zfeat_size + 256 // 4
+        feature_size = 256 + zfeat_size + 256 // 4 + opt.action_dim # 14 for action feature
 
         # Decoders
         # Human + Object DF predictor
@@ -93,6 +93,7 @@ class ACTIONCHORE(BasePIFuNet):
         # If it is not in training, only produce the last im_feat
         if not self.training:
             self.im_feat_list = [self.im_feat_list[-1]]
+        return (self.im_feat_list, self.tmpx, self.normx)
 
     def project_points(self, points, offsets):
         """
@@ -110,7 +111,7 @@ class ACTIONCHORE(BasePIFuNet):
         store all intermediate features.
         query() function may behave differently during training/testing.
         :param points: [B, N, 3] world space coordinates of points
-        :param action_feature: one-hot vector [14], action feature
+        :param action_feature: one-hot vector [B, 14], action feature
         :param calibs: [B, 3, 4] calibration matrices for each image
         :param transforms: Optional [B, 2, 3] image space coordinate transforms
         :param labels: Optional [B, Res, N] gt labeling
@@ -129,6 +130,11 @@ class ACTIONCHORE(BasePIFuNet):
         z_feat = torch.cat([points[:, :, 0:2].transpose(1, 2), rela_z], 1)  # use xyz values
         in_img = (xy[:, 0] >= -1.0) & (xy[:, 0] <= 1.0) & (xy[:, 1] >= -1.0) & (xy[:, 1] <= 1.0)
 
+        # add action feateure here
+        # shape : (B, C) -> (B, C, N)
+        # N = points.shape[1]
+        # action_features = action_feature.unsqueeze(0).repeat_interleave(N,dim=0).permute(1,2,0)
+
         assert self.opt.skip_hourglass
         if self.opt.skip_hourglass:
             tmpx_local_feature = self.index(self.tmpx, xy)
@@ -141,7 +147,6 @@ class ACTIONCHORE(BasePIFuNet):
                 point_local_feat_list.append(tmpx_local_feature)
 
             # I need to add action feature here
-            point_local_feat.append(action_feature)
             point_local_feat = torch.cat(point_local_feat_list, 1)
             preds = self.decode(point_local_feat)
 
@@ -259,4 +264,46 @@ class ACTIONCHORE(BasePIFuNet):
         print(lstr[:-1])
 
 
+    def check_action_chore(self):
+        batch_size = 1
+        test_img = torch.randn((batch_size, 5, 512, 512)) # RGB, obj_mask, person_mask 5 channels
+        self.filter(test_img)
+
+        # fake points
+        points = torch.randn((batch_size, 100, 3)) # [B, N, 3]
+        xyz = points.permute(0, 2, 1) # [B, 3, N]
+        xy = xyz[:, :2, :]              # [B, 2, N]
+        rela_z = (points[:, :, 2:3] - 2.2).transpose(1, 2)  # relative depth to a fixed smpl center
+        z_feat = torch.cat([points[:, :, 0:2].transpose(1, 2), rela_z], 1)
+        in_img = (xy[:, 0] >= -1.0) & (xy[:, 0] <= 1.0) & (xy[:, 1] >= -1.0) & (xy[:, 1] <= 1.0)
+        tmpx_local_feature = self.index(self.tmpx, xy)
+
+        # fake action features
+        action_feature = torch.randint(low=0, high=13, size=(batch_size,)) # fake action
+        action_feature = torch.nn.functional.one_hot(action_feature, num_classes=self.opt.action_dim) # convert to one_hot vection
+        N = points.shape[1]
+        action_features = action_feature.unsqueeze(0).repeat_interleave(N,dim=0).permute(1,2,0)
+
+
+        for im_feat in self.im_feat_list:
+            point_local_feat_list = [self.index(im_feat, xy), z_feat, action_features]
+            if self.opt.skip_hourglass:  # use skip connection? yes!
+                point_local_feat_list.append(tmpx_local_feature)
+
+            # I need to add action feature here
+
+            point_local_feat = torch.cat(point_local_feat_list, 1)
+            preds = self.decode(point_local_feat)
+
+            # out of image plane is always set to a maximum
+            df = preds[0]  # the first is always df prediction
+            df_trans = df.transpose(1, 2)  # (B, 2, N) -> (B, N, 2)
+            df_trans[~in_img] = self.OUT_DIST
+            df = df_trans.transpose(1, 2)
+
+            self.intermediate_preds_list.append((df, *preds[1:]))
+
+        self.preds = self.intermediate_preds_list[-1]
+
+        print(len(self.preds))
 

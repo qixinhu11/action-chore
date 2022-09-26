@@ -1,5 +1,6 @@
 {
   "exp_name": "chore-release",
+  "action_dim": 14,
   "test_kid": 1,
   "image_size": [
     2048,
