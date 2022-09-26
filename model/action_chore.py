@@ -7,8 +7,8 @@ from model.net_util import init_weights
 from .camera import KinectColorCamera
 
 
-class CHORE(BasePIFuNet):
-    def __init__(self,opt,action_feature,
+class ACTIONCHORE(BasePIFuNet):
+    def __init__(self,opt,
                  projection_mode='perspective',
                  error_term=nn.MSELoss(),
                  rank=-1,
@@ -23,14 +23,13 @@ class CHORE(BasePIFuNet):
         :param num_parts:
         :param hidden_dim:
         """
-        super(CHORE, self).__init__(projection_mode=projection_mode,
+        super(ACTIONCHORE, self).__init__(projection_mode=projection_mode,
             error_term=error_term)
         self.opt = opt
         self.name = 'chore'
         self.device = torch.device(opt.gpu_id)
 
         self.image_filter = HGFilter(opt)  # encoder
-
         # This is a list of [B x Feat_i x H x W] features
         self.im_feat_list = []
         self.tmpx = None
@@ -104,13 +103,14 @@ class CHORE(BasePIFuNet):
         # adapt for multiple GPU training
         return self.camera.project_points(points, offsets)
 
-    def query(self, points, crop_center=None, **kwargs):
+    def query(self, points, action_feature, crop_center=None, **kwargs):
         '''
         Given 3D points, query the network predictions for each point.
         Image features should be pre-computed before this call.
         store all intermediate features.
         query() function may behave differently during training/testing.
         :param points: [B, N, 3] world space coordinates of points
+        :param action_feature: one-hot vector [14], action feature
         :param calibs: [B, 3, 4] calibration matrices for each image
         :param transforms: Optional [B, 2, 3] image space coordinate transforms
         :param labels: Optional [B, Res, N] gt labeling
@@ -141,7 +141,7 @@ class CHORE(BasePIFuNet):
                 point_local_feat_list.append(tmpx_local_feature)
 
             # I need to add action feature here
-
+            point_local_feat.append(action_feature)
             point_local_feat = torch.cat(point_local_feat_list, 1)
             preds = self.decode(point_local_feat)
 
@@ -175,7 +175,7 @@ class CHORE(BasePIFuNet):
         '''
         return self.im_feat_list[-1]
 
-    def forward(self, images, points, df_h, df_o, parts_gt, pca_gt, body_center=None,
+    def forward(self, images, points, df_h, df_o, parts_gt, pca_gt, action_feature, body_center=None,
                 max_dist=5.0, obj_center=None, crop_center=None,
                 **kwargs):
         # Get image feature

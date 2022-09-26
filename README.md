@@ -47,3 +47,11 @@ python -W ignore recon/recon_fit_behave.py chore-release --save_name chore-relea
 
 python -W ignore recon/evaluate.py
 ```
+
+
+## action-chore
+
+```
+# check model
+python -W ignore -m torch.distributed.launch --nproc_per_node=1 --use_env check_action_chore.py -en chore-release
+```
