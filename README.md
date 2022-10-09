@@ -63,4 +63,7 @@ python preprocess/preprocess_action.py
 ```bash
 # train action-chore-encoder
 python -W ignore -m torch.distributed.launch --nproc_per_node=4 --use_env action_encoder_train_launch.py -en action-encoder-core
+
+# train action-chore-decoder
+python -W ignore -m torch.distributed.launch --nproc_per_node=4 --use_env action_decoder_train_launch.py -en action-decoder-core
 ```

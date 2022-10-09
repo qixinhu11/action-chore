@@ -26,7 +26,7 @@ class ACTIONCHORE_encoder(BasePIFuNet):
         super(ACTIONCHORE_encoder, self).__init__(projection_mode=projection_mode,
             error_term=error_term)
         self.opt = opt
-        self.name = 'chore'
+        self.name = 'action-chore-encoder'
         self.device = torch.device(opt.gpu_id)
 
         self.image_filter = HGFilter(opt)  # encoder

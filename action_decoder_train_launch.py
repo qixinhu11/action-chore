@@ -12,10 +12,10 @@ import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 from utils.dist_utils import init_distributed_mode
 
-from model import ACTIONCHORE_encoder
-from trainer.action_encoder_trainer import ActionEncoderTrainer
+from model import ACTIONCHORE_decoder
+from trainer.action_decoder_trainer import ActionDecoderTrainer
 from data.data_paths import DataPaths
-from data.action_encoder_train_data import ActionEncoderBehaveDataset
+from data.action_decoder_train_data import ActionDecoderBehaveDataset
 
 
 def launch_train(args):
@@ -26,12 +26,12 @@ def launch_train(args):
     device = torch.device(args.device)
 
     # prepare model
-    model = ACTIONCHORE_encoder(args, rank=rank).to(device)
+    model = ACTIONCHORE_decoder(args, rank=rank).to(device)
     ddp_mp_model = DDP(model, device_ids=[rank], find_unused_parameters=True) # this is required
 
     # prepare data
     train_paths, val_paths = DataPaths.load_splits(args.split_file)
-    train_dataset = ActionEncoderBehaveDataset(train_paths, args.batch_size, 'train',
+    train_dataset = ActionDecoderBehaveDataset(train_paths, args.batch_size, 'train',
                                   num_workers=args.num_workers,
                                   total_samplenum=args.num_samples_train,
                                   image_size=args.net_img_size,
@@ -41,7 +41,7 @@ def launch_train(args):
                                   random_flip=args.random_flip,
                                   aug_blur=args.aug_blur,
                                   crop_size=args.loadSize,)
-    val_dataset = ActionEncoderBehaveDataset(val_paths, args.batch_size*2, 'val',
+    val_dataset = ActionDecoderBehaveDataset(val_paths, args.batch_size*2, 'val',
                                   num_workers=args.num_workers,
                                   total_samplenum=args.num_samples_train,
                                   image_size=args.net_img_size,
@@ -52,7 +52,7 @@ def launch_train(args):
                                   aug_blur=0.,
                                   crop_size=args.loadSize, )
 
-    trainer = ActionEncoderTrainer(ddp_mp_model, device,
+    trainer = ActionDecoderTrainer(ddp_mp_model, device,
                           train_dataset,
                           val_dataset,
                           args.exp_name,

@@ -7,7 +7,7 @@ from model.net_util import init_weights
 from .camera import KinectColorCamera
 
 
-class CHORE(BasePIFuNet):
+class ACTIONCHORE_decoder(BasePIFuNet):
     def __init__(self,opt,
                  projection_mode='perspective',
                  error_term=nn.MSELoss(),
@@ -23,14 +23,13 @@ class CHORE(BasePIFuNet):
         :param num_parts:
         :param hidden_dim:
         """
-        super(CHORE, self).__init__(projection_mode=projection_mode,
+        super(ACTIONCHORE_decoder, self).__init__(projection_mode=projection_mode,
             error_term=error_term)
         self.opt = opt
-        self.name = 'chore'
+        self.name = 'action-chore-decoder'
         self.device = torch.device(opt.gpu_id)
 
         self.image_filter = HGFilter(opt)  # encoder
-
         # This is a list of [B x Feat_i x H x W] features
         self.im_feat_list = []
         self.tmpx = None
@@ -53,13 +52,17 @@ class CHORE(BasePIFuNet):
         self.pca_predictor = self.make_decoder(feature_size, 9, 1, hidden_dim)
         # smpl center and obj center decoder
         self.center_predictor = self.make_decoder(feature_size, 6, 1, hidden_dim)
+        # action predictor
+        self.action_predictor = self.make_decoder(feature_size, opt.action_dim, 1, hidden_dim)
+
 
         # loss functions
         self.rank = rank  # for distributed training
         self.dfloss_func = nn.L1Loss(reduction='none').cuda(self.rank)  # use udf loss
         self.part_loss_func = nn.CrossEntropyLoss(reduction='none').cuda(self.rank)
-        # default loss weights for dfh, dfo, parts, pca,  smpl, obj, gradh grado
-        self.loss_weights = [1.0, 1.0, 0.006, 500, 1000, 1000]
+        self.action_loss_func = nn.CrossEntropyLoss(reduction='none').cuda(self.rank)
+        # default loss weights for dfh, dfo, parts, pca,  smpl, obj, gradh grado, action
+        self.loss_weights = [1.0, 1.0, 0.006, 500, 1000, 1000, 0.005]
 
         self.camera = KinectColorCamera(opt.loadSize)
         self.OUT_DIST = 5.0  # value for points outside the image plane
@@ -140,8 +143,6 @@ class CHORE(BasePIFuNet):
             if self.opt.skip_hourglass:  # use skip connection? yes!
                 point_local_feat_list.append(tmpx_local_feature)
 
-            # I need to add action feature here
-
             point_local_feat = torch.cat(point_local_feat_list, 1)
             preds = self.decode(point_local_feat)
 
@@ -156,17 +157,17 @@ class CHORE(BasePIFuNet):
         self.preds = self.intermediate_preds_list[-1]
 
     def decode(self, features):
-        "predict pca, smpl and object center"
+        "predict pca, smpl, object center and actions"
         df = self.df(features)
         pca_axis = self.pca_predictor(features)
         out_pca = pca_axis.view(df.shape[0], 3, 3, -1)
         parts = self.part_predictor(features)
 
         centers = self.center_predictor(features)
-
+        actions = self.action_predictor(features)
         df_out = df
 
-        return df_out, out_pca, parts, centers
+        return df_out, out_pca, parts, centers, actions
 
     def get_im_feat(self):
         '''
@@ -175,7 +176,7 @@ class CHORE(BasePIFuNet):
         '''
         return self.im_feat_list[-1]
 
-    def forward(self, images, points, df_h, df_o, parts_gt, pca_gt, body_center=None,
+    def forward(self, images, points, df_h, df_o, parts_gt, pca_gt, action_gt, body_center=None,
                 max_dist=5.0, obj_center=None, crop_center=None,
                 **kwargs):
         # Get image feature
@@ -186,12 +187,12 @@ class CHORE(BasePIFuNet):
                    **kwargs)
 
         # predict centers as well
-        error = self.get_errors(df_h, df_o, parts_gt, pca_gt, max_dist,
+        error = self.get_errors(df_h, df_o, parts_gt, pca_gt, action_gt, max_dist,
                                 body_center, obj_center, **kwargs)
 
         return error
 
-    def get_errors(self, df_h, df_o, parts_gt, pca_gt, max_dist, body_center,
+    def get_errors(self, df_h, df_o, parts_gt, pca_gt, action_gt, max_dist, body_center,
                    obj_center, **kwargs):
         """
         body_center: smpl center
@@ -200,7 +201,7 @@ class CHORE(BasePIFuNet):
 
         losses_all, error = 0.0, 0.
         for preds in self.intermediate_preds_list:
-            df_pred, pca_pred, parts_pred, centers = preds
+            df_pred, pca_pred, parts_pred, centers, action_pred = preds
             # separate distance fields to human and object
             df_h_pred = df_pred[:, 0]  # (B, N)
             df_o_pred = df_pred[:, 1]
@@ -210,6 +211,10 @@ class CHORE(BasePIFuNet):
             # loss_parts = self.part_loss_func(parts_pred, parts_gt) * 0.1
             loss_parts = self.part_loss_func(parts_pred, parts_gt) * self.loss_weights[2]
             loss_parts = loss_parts.sum(-1).mean()
+            
+            # action prediction loss
+            loss_action = self.action_loss_func(action_pred, action_gt) * self.loss_weights[-1]
+            loss_action = loss_action.sum(-1).mean()
 
             # PCA axis loss
             mask = (df_o < 0.05).unsqueeze(1).unsqueeze(1)  # (B, N), pca_gt: (B, 3, 3, N)
@@ -227,8 +232,9 @@ class CHORE(BasePIFuNet):
                                            reduction='none') * mask)
             loss_smpl_center = loss_smpl_center.mean() * self.loss_weights[5]
 
-            error += loss_h + loss_o + loss_parts + loss_pca + loss_smpl_center + loss_obj_center
-            losses_all += torch.tensor([loss_h, loss_o, loss_parts, loss_pca, loss_smpl_center, loss_obj_center])
+
+            error += loss_h + loss_o + loss_parts + loss_action + loss_pca + loss_smpl_center + loss_obj_center
+            losses_all += torch.tensor([loss_h, loss_o, loss_parts, loss_action, loss_pca, loss_smpl_center, loss_obj_center])
 
         error /= len(self.intermediate_preds_list)
         losses_all /= len(self.intermediate_preds_list)
@@ -245,14 +251,14 @@ class CHORE(BasePIFuNet):
 
     def format_sep_losses(self, losses_all):
         "losses_all: loss tensor"
-        names = ['df_h', 'df_o', 'parts', 'pca', 'smpl', 'obj']
+        names = ['df_h', 'df_o', 'parts', 'action', 'pca', 'smpl', 'obj']
         loss_dict = {}
         for name, sp_loss in zip(names, losses_all):
             loss_dict[name] = sp_loss
         return loss_dict
 
     def print_errors(self, errors):
-        names = ['df_h', 'df_o', 'parts', 'pca', 'smpl', 'obj', 'grad_h', 'grad_o']
+        names = ['df_h', 'df_o', 'parts', 'action', 'pca', 'smpl', 'obj', 'grad_h', 'grad_o']
         lstr = ''
         for n, ls in zip(names, errors):
             lstr += f'{n}:{ls}, '
