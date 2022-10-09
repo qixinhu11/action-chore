@@ -7,7 +7,7 @@ from model.net_util import init_weights
 from .camera import KinectColorCamera
 
 
-class ACTIONCHORE(BasePIFuNet):
+class ACTIONCHORE_encoder(BasePIFuNet):
     def __init__(self,opt,
                  projection_mode='perspective',
                  error_term=nn.MSELoss(),
@@ -23,7 +23,7 @@ class ACTIONCHORE(BasePIFuNet):
         :param num_parts:
         :param hidden_dim:
         """
-        super(ACTIONCHORE, self).__init__(projection_mode=projection_mode,
+        super(ACTIONCHORE_encoder, self).__init__(projection_mode=projection_mode,
             error_term=error_term)
         self.opt = opt
         self.name = 'chore'
@@ -111,7 +111,7 @@ class ACTIONCHORE(BasePIFuNet):
         store all intermediate features.
         query() function may behave differently during training/testing.
         :param points: [B, N, 3] world space coordinates of points
-        :param action_feature: one-hot vector [B, 14], action feature
+        :param action_feature: one-hot vector [B, action_dim], action feature
         :param calibs: [B, 3, 4] calibration matrices for each image
         :param transforms: Optional [B, 2, 3] image space coordinate transforms
         :param labels: Optional [B, Res, N] gt labeling
@@ -130,11 +130,6 @@ class ACTIONCHORE(BasePIFuNet):
         z_feat = torch.cat([points[:, :, 0:2].transpose(1, 2), rela_z], 1)  # use xyz values
         in_img = (xy[:, 0] >= -1.0) & (xy[:, 0] <= 1.0) & (xy[:, 1] >= -1.0) & (xy[:, 1] <= 1.0)
 
-        # add action feateure here
-        # shape : (B, C) -> (B, C, N)
-        # N = points.shape[1]
-        # action_features = action_feature.unsqueeze(0).repeat_interleave(N,dim=0).permute(1,2,0)
-
         assert self.opt.skip_hourglass
         if self.opt.skip_hourglass:
             tmpx_local_feature = self.index(self.tmpx, xy)
@@ -142,7 +137,7 @@ class ACTIONCHORE(BasePIFuNet):
         self.intermediate_preds_list = []
 
         for im_feat in self.im_feat_list:
-            point_local_feat_list = [self.index(im_feat, xy), z_feat]
+            point_local_feat_list = [self.index(im_feat, xy), z_feat, action_feature]
             if self.opt.skip_hourglass:  # use skip connection? yes!
                 point_local_feat_list.append(tmpx_local_feature)
 
@@ -187,7 +182,7 @@ class ACTIONCHORE(BasePIFuNet):
         self.filter(images)
 
         # Phase 2: point query
-        self.query(points=points, crop_center=crop_center,
+        self.query(points=points, action_feature=action_feature, crop_center=crop_center,
                    **kwargs)
 
         # predict centers as well
@@ -279,7 +274,7 @@ class ACTIONCHORE(BasePIFuNet):
         tmpx_local_feature = self.index(self.tmpx, xy)
 
         # fake action features
-        action_feature = torch.randint(low=0, high=13, size=(batch_size,)) # fake action
+        action_feature = torch.randint(low=0, high=self.opt.action_dim-1, size=(batch_size,)) # fake action
         action_feature = torch.nn.functional.one_hot(action_feature, num_classes=self.opt.action_dim) # convert to one_hot vection
         N = points.shape[1]
         action_features = action_feature.unsqueeze(0).repeat_interleave(N,dim=0).permute(1,2,0)
@@ -305,5 +300,6 @@ class ACTIONCHORE(BasePIFuNet):
 
         self.preds = self.intermediate_preds_list[-1]
 
-        print(len(self.preds))
+        print("the preds lens is:", len(self.preds))
+        print("the pred[0].shape is:", self.preds[0].shape)
 
