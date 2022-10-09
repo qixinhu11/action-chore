@@ -102,8 +102,7 @@ class ActionDecoderTrainer(object):
             obj_center = batch.get('obj_center').cuda(self.rank, non_blocking=True)  # (B, 3)
 
             # action label
-            action_feature = batch.get('action').cuda(self.rank, non_blocking=True) # (B,) or (B, 1)
-            action_feature = action_feature.to(torch.int64)
+            action_feature = batch.get('action').cuda(self.rank, non_blocking=True).long() # (B,) or (B, 1)
             # convert to one-hot encodeing
             action_feature = F.one_hot(action_feature, num_classes=self.num_action) # (B, num_action)
 
@@ -112,7 +111,7 @@ class ActionDecoderTrainer(object):
                                df_o,
                                parts_gt,
                                pca_gt,
-                               action_feature=action_feature,
+                               action_gt=action_feature,
                                max_dist=self.max_dist,
                                body_center=body_center,
                                # offsets=offsets,
