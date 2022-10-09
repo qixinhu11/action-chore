@@ -52,6 +52,9 @@ python -W ignore recon/evaluate.py
 ## action-chore
 
 ```bash
+# clone this repo
+git clone https://github.com/qixinhu11/action-chore.git
+
 # prepare action label
 python preprocess/preprocess_action.py
 ```
@@ -59,5 +62,5 @@ python preprocess/preprocess_action.py
 
 ```bash
 # train action-chore-encoder
-python -W ignore -m torch.distributed.launch --nproc_per_node=4 --use_env action_encoder_train_launch.py -en action-encoder-core.json
+python -W ignore -m torch.distributed.launch --nproc_per_node=4 --use_env action_encoder_train_launch.py -en action-encoder-core
 ```

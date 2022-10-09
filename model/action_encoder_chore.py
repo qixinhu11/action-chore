@@ -136,8 +136,12 @@ class ACTIONCHORE_encoder(BasePIFuNet):
 
         self.intermediate_preds_list = []
 
+        # copy action_feature to N points 
+        N = points.shape[1]
+        action_features = action_feature.unsqueeze(0).repeat_interleave(N,dim=0).permute(1,2,0)  # (B, action_dim, N)
+
         for im_feat in self.im_feat_list:
-            point_local_feat_list = [self.index(im_feat, xy), z_feat, action_feature]
+            point_local_feat_list = [self.index(im_feat, xy), z_feat, action_features]
             if self.opt.skip_hourglass:  # use skip connection? yes!
                 point_local_feat_list.append(tmpx_local_feature)
 

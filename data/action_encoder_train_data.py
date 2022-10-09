@@ -59,9 +59,10 @@ class ActionEncoderBehaveDataset(BaseDataset):
         images, center = self.prepare_image_crop(data, flip)
 
         # here I need to add the action label into res
-        path_dir = path[0].split('/')[:-1]
+        path_dir = path.split('/')[:-1]
         path_dir = '/'.join(path_dir)
-        action = np.load(os.path.join(path_dir, 'action.npz'))
+        action_file = os.path.join(path_dir, 'action.npz')
+        action = np.load(action_file)
         action = action['action']
 
         # add additional info data

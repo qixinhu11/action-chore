@@ -103,9 +103,9 @@ class ActionEncoderTrainer(object):
 
             # action label
             action_feature = batch.get('action').cuda(self.rank, non_blocking=True) # (B,) or (B, 1)
+            action_feature = action_feature.to(torch.int64)
             # convert to one-hot encodeing
-            print(action_feature.shape)
-            action_feature = F.one_hot(action_feature, num_classes=self.num_action) # (B, 15)
+            action_feature = F.one_hot(action_feature, num_classes=self.num_action) # (B, num_action)
 
 
             error = self.model(input_images, points, df_h,
