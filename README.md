@@ -51,13 +51,13 @@ python -W ignore recon/evaluate.py
 
 ## action-chore
 
+```bash
+# prepare action label
+python preprocess/preprocess_action.py
 ```
-# check model
-you can find the check model in check_action.ipynb
 
 
-
+```bash
 # train action-chore-encoder
 python -W ignore -m torch.distributed.launch --nproc_per_node=4 --use_env action_encoder_train_launch.py -en action-encoder-core.json
-
 ```
