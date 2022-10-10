@@ -186,8 +186,12 @@ class ACTIONCHORE_decoder(BasePIFuNet):
         self.query(points=points, crop_center=crop_center,
                    **kwargs)
 
+        # make action_gt to each points 
+        N = points.shape[1]
+        action_gts = action_gt.unsqueeze(0).repeat_interleave(N,dim=0).permute(1,2,0).to(torch.float64)  # (B, action_dim, N)
+
         # predict centers as well
-        error = self.get_errors(df_h, df_o, parts_gt, pca_gt, action_gt, max_dist,
+        error = self.get_errors(df_h, df_o, parts_gt, pca_gt, action_gts, max_dist,
                                 body_center, obj_center, **kwargs)
 
         return error
