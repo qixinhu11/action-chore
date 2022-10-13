@@ -512,12 +512,28 @@ class ReconFitterBase:
         loss_dict['df_h'] = torch.clamp(df_pred[:, 0:1, :], max=0.1).mean()
         return df_pred, parts_pred, centers_pred
 
+    def compute_df_h_loss_decoder(self, data_dict, loss_dict, model, smpl_verts):
+        "human df_h loss"
+        model.query(smpl_verts, **data_dict['query_dict'])
+        df_pred, pca_pred, parts_pred, centers_pred, actions_pred = model.get_preds()
+        loss_dict['df_h'] = torch.clamp(df_pred[:, 0:1, :], max=0.1).mean()
+        return df_pred, parts_pred, centers_pred
+
     def compute_smpl_center_pred(self, data_dict, model, smpl):
         """compute SMPL center predictions for SMPL verts"""
         with torch.no_grad():
             smpl_verts, _, _, _ = smpl()
             model.query(smpl_verts, **data_dict['query_dict'])
             df_pred, pca_pred, parts_pred, centers_pred = model.get_preds()
+            pred = torch.mean(centers_pred[:, :3], -1)
+            return pred
+
+    def compute_smpl_center_pred_decoder(self, data_dict, model, smpl):
+        """compute SMPL center predictions for SMPL verts"""
+        with torch.no_grad():
+            smpl_verts, _, _, _ = smpl()
+            model.query(smpl_verts, **data_dict['query_dict'])
+            df_pred, pca_pred, parts_pred, centers_pred, actions_pred = model.get_preds()
             pred = torch.mean(centers_pred[:, :3], -1)
             return pred
 

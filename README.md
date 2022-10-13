@@ -67,3 +67,14 @@ python -W ignore -m torch.distributed.launch --nproc_per_node=4 --use_env action
 # train action-chore-decoder
 python -W ignore -m torch.distributed.launch --master_port 9999 --nproc_per_node=4 --use_env action_decoder_train_launch.py -en action-decoder-core
 ```
+
+
+```bash
+Testing
+# first need to fit the the reconstruction
+python -W ignore recon/recon_fit_behave_encoder.py action-encoder-core --save_name action-encoder-core -s /work/vig/qixinhu/repo/BEHAVE-dataset/sequences/Date03_Sub05_toolbox
+python -W ignore recon/recon_fit_behave_decoder.py action-decoder-core --save_name action-decoder-core -s /work/vig/qixinhu/repo/BEHAVE-dataset/sequences/Date03_Sub05_toolbox
+
+# and then evaluate its performance
+
+```

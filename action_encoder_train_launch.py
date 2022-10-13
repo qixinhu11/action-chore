@@ -12,7 +12,7 @@ import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 from utils.dist_utils import init_distributed_mode
 
-from model import ACTIONCHORE_encoder
+from model import CHORE
 from trainer.action_encoder_trainer import ActionEncoderTrainer
 from data.data_paths import DataPaths
 from data.action_encoder_train_data import ActionEncoderBehaveDataset
@@ -26,7 +26,7 @@ def launch_train(args):
     device = torch.device(args.device)
 
     # prepare model
-    model = ACTIONCHORE_encoder(args, rank=rank).to(device)
+    model = CHORE(args, rank=rank).to(device)
     ddp_mp_model = DDP(model, device_ids=[rank], find_unused_parameters=True) # this is required
 
     # prepare data
