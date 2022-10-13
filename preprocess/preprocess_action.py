@@ -24,5 +24,15 @@ def process_action():
         data = np.array(int(action_label['label']))
         np.savez(outfile, action=data)
 
+
+    outdir = BEHAVE_PATH
+    for action_label in action_json['action_label']:
+        outfolder = join(outdir, action_label['name'], action_label['frame'])
+        if not os.path.exists(outfolder):
+            os.makedirs(outfolder)
+        outfile = join(outfolder, 'action.npz')
+        data = np.array(int(action_label['label']))
+        np.savez(outfile, action=data)
+        
 if __name__ == "__main__":
     process_action()

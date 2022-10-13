@@ -18,9 +18,9 @@ import torch.nn.functional as F
 from lib_smpl.const import SMPL_POSE_PRAMS_NUM
 
 from data.data_paths import DataPaths
-from data.test_data import TestData
-from model import CHORE
-from recon.generator import Generator
+from data.action_encoder_test_data import ActionTestData
+from model import ACTIONCHORE_encoder
+from recon.generator_action_encoder import ActionGenerator
 from recon.obj_pose_roi import SilLossROI
 from recon.recon_fit_base import ReconFitterBase, RECON_PATH
 
@@ -30,9 +30,9 @@ class ReconFitterBehave(ReconFitterBase):
         # prepare dataloader
         loader = self.init_dataloader(args)
         # prepare model
-        model = CHORE(args)
+        model = ACTIONCHORE_encoder(args)
         # generator
-        generator = Generator(model, args.exp_name, threshold=2.0,
+        generator = ActionGenerator(model, args.exp_name, threshold=2.0,
                               sparse_thres=args.sparse_thres,
                               filter_val=args.filter_val)
         loop = tqdm(loader)
@@ -80,7 +80,7 @@ class ReconFitterBehave(ReconFitterBase):
         image_files = DataPaths.get_image_paths_seq(self.seq_folder, check_occlusion=True)
         batch_end = args.end if args.end is not None else len(image_files)
         image_files = image_files[args.start:batch_end]
-        dataset = TestData(image_files, batch_size, batch_size,
+        dataset = ActionTestData(image_files, batch_size, batch_size,
                            image_size=args.net_img_size,
                            crop_size=args.loadSize)
         loader = dataset.get_loader(shuffle=False)
