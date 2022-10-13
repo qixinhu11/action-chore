@@ -29,6 +29,8 @@ from recon.recon_fit_base import ReconFitterBase, RECON_PATH
 
 class ReconFitterBehave(ReconFitterBase):
     def fit_recon(self, args):
+        # action_num
+        self.num_action = args.action_dim
         # prepare dataloader
         loader = self.init_dataloader(args)
         # prepare model
