@@ -358,7 +358,20 @@ class ReconFitterBehave(ReconFitterBase):
             'trans': lambda cst, it: 10.0 ** 2 * cst / (1 + it),  # prevent deviate too much
         }
         return loss_weight
-
+        
+    def prepare_query_dict(self, batch):
+        """
+        dict of additional data required for query besides query points
+        :param batch: a batch of data from dataloader
+        :return:
+        """
+        action_feature = batch.get('action').to(self.device)
+        action_feature = F.one_hot(action_feature, num_classes=self.num_action) # (B, num_action)
+        crop_center = batch.get('crop_center').to(self.device)  # (B, 3)
+        return {
+            'action_feature': action_feature,
+            'crop_center': crop_center
+        }
 
 def recon_fit(args):
     fitter = ReconFitterBehave(args.seq_folder, debug=args.display, outpath=args.outpath, args=args)
