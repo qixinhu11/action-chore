@@ -368,7 +368,7 @@ def recon_fit(args):
 def recon_fits(args):
     seqs = json.load(open(args.split))['seqs']
     for seq in seqs:
-        print(os.paht.join(BEHAVE_PATH, seq))
+        print(os.path.join(BEHAVE_PATH, seq))
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
