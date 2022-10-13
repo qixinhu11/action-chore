@@ -8,6 +8,8 @@ else:
 Cite: CHORE: Contact, Human and Object REconstruction from a single RGB image. ECCV'2022
 """
 import sys, os
+from os import path 
+import numpy as np 
 sys.path.append(os.getcwd())
 from tqdm import tqdm
 from os.path import basename
@@ -80,6 +82,17 @@ class ReconFitterBehave(ReconFitterBase):
         image_files = DataPaths.get_image_paths_seq(self.seq_folder, check_occlusion=True)
         batch_end = args.end if args.end is not None else len(image_files)
         image_files = image_files[args.start:batch_end]
+
+        # check img_files here
+        image_file = image_files[0]
+        print(image_file)
+        path_dir = path.split('/')[:-1]
+        path_dir = '/'.join(path_dir)
+        action_file = os.path.join(path_dir, 'action.npz')
+        action = np.load(action_file)
+        action = action['action']
+        exit()
+
         dataset = ActionTestData(image_files, batch_size, batch_size,
                            image_size=args.net_img_size,
                            crop_size=args.loadSize)

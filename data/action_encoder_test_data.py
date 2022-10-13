@@ -57,13 +57,11 @@ class ActionTestData(BaseDataset):
         res['crop_center'] = center.astype(self.dtype)
         res['old_crop_center'] = old_center # different from crop center if moved to mean center
         # here I need to add the action label into res
-        print(rgb_file)
         path_dir = path.split('/')[:-1]
         path_dir = '/'.join(path_dir)
         action_file = os.path.join(path_dir, 'action.npz')
         action = np.load(action_file)
         action = action['action']
-        exit()
         res['action'] = action
         return res
 
