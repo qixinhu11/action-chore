@@ -138,7 +138,11 @@ class ACTIONCHORE_encoder(BasePIFuNet):
 
         # copy action_feature to N points 
         N = points.shape[1]
+        print("points.shape:",self.points.shape)
+        print("action_feature:", action_feature.shape)
         action_features = action_feature.unsqueeze(0).repeat_interleave(N,dim=0).permute(1,2,0)  # (B, action_dim, N)
+        print("action_features:", action_features.shape)
+
 
         for im_feat in self.im_feat_list:
             point_local_feat_list = [self.index(im_feat, xy), z_feat, action_features]
