@@ -12,6 +12,8 @@ module load anaconda3/2022.01
 # for chore env, use gcc/9.2.0
 module load gcc/9.2.0
 
+source activate chore
+
 sinfo -p jiang --Format=time,nodes,statecompact,gres
 squeue -p jiang
 ```
@@ -41,6 +43,8 @@ python -W ignore -m torch.distributed.launch --nproc_per_node=4 --use_env train_
 
 # Evaluate
 unzip behave-test-object-fullmask.zip -d /work/vig/qixinhu/repo/BEHAVE-dataset/sequences
+
+python recon/evaluate.py 
 
 # first you need to generate reconstruction results
 python -W ignore recon/recon_fit_behave.py chore-release --save_name chore-release -s /work/vig/qixinhu/repo/BEHAVE-dataset/sequences/Date03_Sub05_toolbox

@@ -5,7 +5,7 @@
 CODE: "/work/vig/qixinhu/repo/action-chore" # path to your project main folder
 BEHAVE_PATH: "/work/vig/qixinhu/repo/BEHAVE-dataset/sequences" # root path where BEHAVE sequences are stored
 PROCESSED_PATH: "/work/vig/qixinhu/repo/BEHAVE-dataset/chore" # root path where processed data are saved
-RECON_PATH: "./results/static00/newdata" # root path where reconstruction results will be saved
+RECON_PATH: "../model_checkpoints/results/static00/newdata" # root path where reconstruction results will be saved
 
 # paths to SMPL libs
 SMPL_ASSETS_ROOT: "assets"
