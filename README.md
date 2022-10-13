@@ -16,6 +16,7 @@ source activate chore
 
 sinfo -p jiang --Format=time,nodes,statecompact,gres
 squeue -p jiang
+scancel JOB_ID
 ```
 
 ## chore code
@@ -81,7 +82,7 @@ python -W ignore recon/recon_fit_behave_decoder.py action-decoder-core --save_na
 
 # evaluate on whole sequence
 python -W ignore recon/recon_fit_behave_decoder.py action-decoder-core --save_name action-decoder-core
-
+python -W ignore recon/recon_fit_behave_encoder.py action-encoder-core --save_name action-encoder-core
 # and then evaluate its performance
 
 ```

@@ -8,6 +8,7 @@ else:
 Cite: CHORE: Contact, Human and Object REconstruction from a single RGB image. ECCV'2022
 """
 import sys, os
+import json
 from os import path 
 import numpy as np 
 sys.path.append(os.getcwd())
@@ -24,7 +25,7 @@ from data.action_encoder_test_data import ActionTestData
 from model import ACTIONCHORE_encoder
 from recon.generator_action_encoder import ActionGenerator
 from recon.obj_pose_roi import SilLossROI
-from recon.recon_fit_base import ReconFitterBase, RECON_PATH
+from recon.recon_fit_base import ReconFitterBase, RECON_PATH, BEHAVE_PATH
 
 
 class ReconFitterBehave(ReconFitterBase):
@@ -381,6 +382,14 @@ def recon_fit(args):
     fitter.fit_recon(args)
     print('all done')
 
+def recon_fits(args):
+    seqs = json.load(open(args.split))['seqs']
+
+    for seq in seqs:
+        args.seq_folder = os.path.join(BEHAVE_PATH, seq)
+        recon_fit(args)
+        with open("action_encoder.txt", 'a') as f:
+            print(f'{seq} is done.', file=f)
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
@@ -390,6 +399,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('exp_name', help='experiment name')
     parser.add_argument('-s', '--seq_folder', help="path to one BEHAVE sequence")
+    parser.add_argument('-split', default='splits/behave-test.json', help='split file, json file contains all sequence names to compute erros')
     parser.add_argument('-sn', '--save_name', required=True)
     parser.add_argument('-o', '--outpath', default=RECON_PATH, help='where to save reconstruction results')
     parser.add_argument('-ck', '--checkpoint', default=None, help='load which checkpoint, will find best or last checkpoint if None')
@@ -410,6 +420,7 @@ if __name__ == '__main__':
     configs.filter_val = args.filter_val
     configs.sparse_thres = args.sparse_thres
     configs.seq_folder = args.seq_folder
+    configs.split = args.split
 
     configs.save_name = args.save_name
 
@@ -422,7 +433,8 @@ if __name__ == '__main__':
     configs.end = args.end
 
     try:
-        recon_fit(configs)
+        # recon_fit(configs)
+        recon_fits(configs)
     except:
         log = traceback.format_exc()
         print(log)

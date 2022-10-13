@@ -370,7 +370,8 @@ def recon_fits(args):
     for seq in seqs:
         args.seq_folder = os.path.join(BEHAVE_PATH, seq)
         recon_fit(args)
-        print(f'{seq} is done.')
+        with open("action_decoder.txt", 'a') as f:
+            print(f'{seq} is done.',file=f)
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
