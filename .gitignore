@@ -135,3 +135,5 @@ experiments/
 results/
 smplh/
 pytorch3d/
+action_encoder.txt
+action_decoder.txt
