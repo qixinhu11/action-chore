@@ -22,7 +22,8 @@ class ActionGenerator:
                  device=torch.device("cuda"),
                  multi_gpus=True,
                  sparse_thres=0.05,
-                 filter_val=0.03
+                 filter_val=0.03,
+                 num_action=15
                  ):
         self.sparse_thres = sparse_thres
         self.filter_val = filter_val
@@ -31,7 +32,7 @@ class ActionGenerator:
         self.model.eval()
         self.device = device
         self.threshold = threshold
-
+        self.num_action = num_action
         self.multi_gpus = multi_gpus  # model trained with multi-gpus or not, for loading checkpoint
         self.checkpoint_path = os.path.dirname(__file__) + '/../experiments/{}/checkpoints/'.format(
             exp_name)  # use new path
@@ -268,6 +269,7 @@ class ActionGenerator:
 
     def prep_query_input(self, batch):
         action_feature = batch.get('action').to(self.device)
+        action_feature = F.one_hot(action_feature, num_classes=self.num_action) # (B, num_action)
         crop_center = batch.get('crop_center').to(self.device)  # (B, 3)
         return {
             'action_feature': action_feature,
