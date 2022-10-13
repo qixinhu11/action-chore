@@ -366,9 +366,7 @@ def recon_fit(args):
     print('all done')
 
 def recon_fits(args):
-    print(args.split)
     seqs = json.load(open(args.split))['seqs']
-    exit()
     for seq in seqs:
         print(os.paht.join(BEHAVE_PATH, seq))
 
@@ -401,6 +399,7 @@ if __name__ == '__main__':
     configs.filter_val = args.filter_val
     configs.sparse_thres = args.sparse_thres
     configs.seq_folder = args.seq_folder
+    configs.split = args.split
 
     configs.save_name = args.save_name
 
