@@ -366,10 +366,9 @@ def recon_fit(args):
     print('all done')
 
 def recon_fits(args):
-    for k, v in vars(args).items():
-        print(k, '=>', v)
-    print('-----------------')
+    print(args.split)
     seqs = json.load(open(args.split))['seqs']
+    exit()
     for seq in seqs:
         print(os.paht.join(BEHAVE_PATH, seq))
 
