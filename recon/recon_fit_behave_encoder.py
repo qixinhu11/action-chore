@@ -85,8 +85,9 @@ class ReconFitterBehave(ReconFitterBase):
 
         # check img_files here
         image_file = image_files[0]
-        print(image_file)
+        print("image_file:",image_file)
         path_dir = path.split('/')[:-1]
+        print("path_dir, path_dir")
         path_dir = '/'.join(path_dir)
         action_file = os.path.join(path_dir, 'action.npz')
         action = np.load(action_file)
