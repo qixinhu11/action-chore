@@ -384,9 +384,9 @@ def recon_fit(args):
 
 def recon_fits(args):
     seqs = json.load(open(args.split))['seqs']
-
     for seq in seqs:
         args.seq_folder = os.path.join(BEHAVE_PATH, seq)
+        print(args.seq_folder)
         recon_fit(args)
         with open("action_encoder.txt", 'a') as f:
             print(f'{seq} is done.', file=f)
