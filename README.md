@@ -50,6 +50,8 @@ python recon/evaluate.py
 # first you need to generate reconstruction results
 python -W ignore recon/recon_fit_behave.py chore-release --save_name chore-release -s /work/vig/qixinhu/repo/BEHAVE-dataset/sequences/Date03_Sub05_toolbox
 
+python -W ignore recon/recon_fit_behave.py chore-release --save_name chore-release
+
 python -W ignore recon/evaluate.py
 ```
 

@@ -22,7 +22,7 @@ from data.test_data import TestData
 from model import CHORE
 from recon.generator import Generator
 from recon.obj_pose_roi import SilLossROI
-from recon.recon_fit_base import ReconFitterBase, RECON_PATH
+from recon.recon_fit_base import ReconFitterBase, RECON_PATH, BEHAVE_PATH
 
 
 class ReconFitterBehave(ReconFitterBase):
@@ -365,6 +365,15 @@ def recon_fit(args):
     print('all done')
 
 
+def recon_fits(args):
+    seqs = ['Date03_Sub03_backpack_back', 'Date03_Sub03_backpack_hand', 'Date03_Sub03_backpack_hug', 'Date03_Sub03_basketball', 'Date03_Sub03_boxlarge']
+
+    for seq in seqs:
+        args.seq_folder = os.path.join(BEHAVE_PATH, seq)
+        recon_fit(args)
+        with open("chore_release.txt", 'a') as f:
+            print(f'{seq} is done.',file=f)
+
 if __name__ == '__main__':
     from argparse import ArgumentParser
     import traceback
@@ -405,7 +414,8 @@ if __name__ == '__main__':
     configs.end = args.end
 
     try:
-        recon_fit(configs)
+        # recon_fit(configs)
+        recon_fits(configs)
     except:
         log = traceback.format_exc()
         print(log)
