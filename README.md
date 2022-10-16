@@ -52,6 +52,8 @@ python -W ignore recon/recon_fit_behave.py chore-release --save_name chore-relea
 
 python -W ignore recon/recon_fit_behave.py chore-release --save_name chore-release
 
+python -W ignore recon/recon_fit_behave.py chore-my --save_name chore-my
+
 python -W ignore recon/evaluate.py
 ```
 
