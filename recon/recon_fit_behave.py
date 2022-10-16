@@ -371,7 +371,7 @@ def recon_fits(args):
     for seq in seqs:
         args.seq_folder = os.path.join(BEHAVE_PATH, seq)
         recon_fit(args)
-        with open("chore_release.txt", 'a') as f:
+        with open(f"{args.save_name}.txt", 'a') as f:
             print(f'{seq} is done.',file=f)
 
 if __name__ == '__main__':
