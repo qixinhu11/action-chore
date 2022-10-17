@@ -89,4 +89,10 @@ python -W ignore recon/recon_fit_behave_decoder.py action-decoder-core --save_na
 python -W ignore recon/recon_fit_behave_encoder.py action-encoder-core --save_name action-encoder-core
 # and then evaluate its performance
 
+python -W ignore recon/evaluate.py  --save_name action-decoder-core
+
+python -W ignore recon/evaluate.py  --save_name action-encoder-core
+
+python -W ignore recon/evaluate.py  --save_name chore-my
+
 ```
